@@ -1,16 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  Button,
   TouchableOpacity,
   StyleSheet,
   FlatList,
   SafeAreaView,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import { getToken, isAuthenticated } from "@/utils/storage";
 import { useNavigation } from "@react-navigation/native";
-// import TabLayout from "./layout";
+import axios from "axios";
 
 interface DropdownItem {
   label: string;
@@ -38,21 +38,103 @@ const months: DropdownItem[] = [
   { label: "Desember", value: "Desember" },
 ];
 
-const dummyData = [
-  {
-    no: 1,
-    tahun: "2023",
-    bulan: "November",
-  },
-];
+type IncomeData = {
+  id: number;
+  year: number;
+  month: string;
+  status: string;
+};
 
-const Pembayaran: React.FC = () => {
-    const navigation:any = useNavigation()
+const Informasi: React.FC = () => {
+  const [data, setData] = useState<IncomeData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigation: any = useNavigation();
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const itemsPerPage = 5;
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const auth = await isAuthenticated();
+      if (!auth) {
+        navigation.navigate("login");
+      }
+    };
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    const dataIncome = async () => {
+      try {
+        const token = await getToken();
+        const response = await axios.get(
+          "http://127.0.0.1:8000/v1/income/list/siswa",
+          {
+            headers: {
+              Authorization: Bearer ${token},
+            },
+          }
+        );
+        setData(response.data.data);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    dataIncome();
+  }, []);
+
+  const getStatusStyle = (status: any) => {
+    switch (status) {
+      case "Telat Bayar":
+        return styles.statusRed;
+      case "Belum Bayar":
+        return styles.statusYellow;
+      case "Sudah Bayar":
+        return styles.statusGreen;
+      default:
+        return styles.statusDefault;
+    }
+  };
+
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+
+  const currentPageData = data.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const renderPagination = () => (
+    <View style={styles.pagination}>
+      <TouchableOpacity
+        disabled={currentPage === 1}
+        onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+      >
+        <Text style={styles.pageButton}>{"<"}</Text>
+      </TouchableOpacity>
+      <Text style={styles.pageNumber}>
+        {currentPage} / {totalPages}
+      </Text>
+      <TouchableOpacity
+        disabled={currentPage === totalPages}
+        onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+      >
+        <Text style={styles.pageButton}>{">"}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
+
+  if (!data || data.length === 0) {
+    return <Text>No Data Available</Text>;
+  }
 
   return (
-      // <TabLayout>  
     <View style={styles.wrap}>
       <SafeAreaView style={styles.container}>
         <Text style={styles.title}>Dashboard User</Text>
@@ -97,27 +179,31 @@ const Pembayaran: React.FC = () => {
             <Text style={styles.tableHeaderText}>No</Text>
             <Text style={styles.tableHeaderText}>Tahun</Text>
             <Text style={styles.tableHeaderText}>Bulan</Text>
-            <Text style={styles.tableHeaderText}>Aksi</Text>
+            <Text style={styles.tableHeaderText}>Status</Text>
           </View>
           <FlatList
-            data={dummyData}
-            keyExtractor={(item) => item.no.toString()}
+            data={currentPageData}
+            keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <View style={styles.tableRow}>
-                <Text style={styles.tableCell}>{item.no}</Text>
-                <Text style={styles.tableCell}>{item.tahun}</Text>
-                <Text style={styles.tableCell}>{item.bulan}</Text>
+                <Text style={styles.tableCell}>{item.id}</Text>
+                <Text style={styles.tableCell}>{item.year}</Text>
+                <Text style={styles.tableCell}>{item.month}</Text>
                 <Text style={styles.tableCell}>
-                  <TouchableOpacity style={styles.payButton} onPress={() => navigation.navigate("metodePembayaran")}>
-                    
-                    <Text style={styles.payButtonText}>Bayar</Text>
-                  </TouchableOpacity>
+                  <View
+                    style={[styles.statusBadge, getStatusStyle(item.status)]}
+                  >
+                    <Text style={styles.statusText}>
+                      {item.status == "Sudah Bayar" ? "Lunas" : item.status}
+                    </Text>
+                  </View>
                 </Text>
               </View>
             )}
           />
         </View>
       </SafeAreaView>
+      {renderPagination()}
     </View>
   );
 };
@@ -193,15 +279,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
   },
-  payButton: {
-    backgroundColor: "#085288",
-    padding: 10,
-    borderRadius: 8,
+  statusRed: {
+    backgroundColor: "red",
   },
-  payButtonText: {
-    color: "#fff",
-    textAlign: "center",
+  statusYellow: {
+    backgroundColor: "yellow",
+  },
+  statusGreen: {
+    backgroundColor: "green",
+  },
+  statusDefault: {
+    backgroundColor: "gray",
+  },
+  pagination: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  pageButton: {
+    marginHorizontal: 10,
+    fontSize: 18,
+    color: "blue",
+  },
+  pageNumber: {
+    fontSize: 18,
   },
 });
 
-export default Pembayaran;
+export default Informasi;

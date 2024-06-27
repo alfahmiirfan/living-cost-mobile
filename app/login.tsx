@@ -1,23 +1,52 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import axios from "axios";
+import { saveToken, getToken } from "@/utils/storage";
 
 const LoginAdmin: React.FC = () => {
-  const navigation = useNavigation();
-  const [nisn, setNisn] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const navigation: any = useNavigation();
+  const [nisn, setNisn] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [data, setData] = useState<any>(null);
+  let token: any = "";
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     // Handle the login logic here
-    console.log('Login:', { nisn, password });
-    // Navigate to the next screen if login is successful
+    try {
+      const response = await axios
+        .post("http://127.0.0.1:8000/v1/siswa/login", {
+          nisn: nisn,
+          password: password,
+        })
+        .then((response) => {
+          // console.log(response.data);
+          saveToken(response.data.data.access_token);
+          setData(response.data);
+          setLoading(false);
+          navigation.navigate("(tabs)", { screen: "pembayaran" });
+        });
+    } catch (err) {
+      console.log(err);
+      setLoading(false);
+    }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
         <Image
-          source={{ uri: 'https://www.sman10pentagonkaur.sch.id/wp-content/uploads/2020/03/logo.png' }}
+          source={{
+            uri: "https://www.sman10pentagonkaur.sch.id/wp-content/uploads/2020/03/logo.png",
+          }}
           style={styles.logo}
         />
       </View>
@@ -56,13 +85,13 @@ const LoginAdmin: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   logoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 32,
   },
   logo: {
@@ -70,8 +99,8 @@ const styles = StyleSheet.create({
     height: 200,
   },
   formContainer: {
-    width: '100%',
-    backgroundColor: '#fff',
+    width: "100%",
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 16,
     // shadowColor: '#000',
@@ -82,14 +111,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 16,
-    color: '#333',
+    color: "#333",
   },
   inputContainer: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 25,
     marginBottom: 16,
     paddingHorizontal: 16,
@@ -99,21 +128,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   loginButton: {
-    backgroundColor: '#F5E81D',
+    backgroundColor: "#F5E81D",
     borderRadius: 25,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 16,
   },
   loginButtonText: {
-    color: '#000',
+    color: "#000",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   forgotPassword: {
     fontSize: 14,
-    color: '#007BFF',
-    textAlign: 'center',
+    color: "#007BFF",
+    textAlign: "center",
     marginTop: 16,
   },
 });

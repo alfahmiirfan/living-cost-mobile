@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import TabBar from "@/components/TabBar";
+import axios from "axios";
+import { getToken } from "@/utils/storage";
 
 interface BankOptionProps {
   bankName: string;
@@ -29,11 +31,12 @@ const BankOption: React.FC<BankOptionProps> = ({
 );
 
 const MetodePembayaran: React.FC = () => {
-  const navigation:any = useNavigation();
+  const navigation: any = useNavigation();
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
   const [selectedBankImage, setSelectedBankImage] = useState<string | null>(
     null
   );
+  const [harga, setHarga] = useState<number>(0);
 
   const handleSelectBank = async (bankName: string, bankImage: string) => {
     setSelectedBank(bankName);
@@ -46,13 +49,91 @@ const MetodePembayaran: React.FC = () => {
     }
   };
 
-  const handlePayNow = () => {
-    if (selectedBank) {
-      navigation.navigate("virtualAccount", {
-        bankName: selectedBank,
-        bankImage: selectedBankImage,
-      });
+  const getid = async () => {
+    try {
+      const value = await AsyncStorage.getItem("id_income");
+      if (value !== null) {
+        return value;
+      }
+    } catch (e) {
+      console.log(e);
     }
+  };
+
+  const ValueBank = async () => {
+    try {
+      const value = await AsyncStorage.getItem("selectedBank");
+      switch (value) {
+        case "BANK BRI":
+          return "BRIVA";
+        case "BANK BNI":
+          return "BNIVA";
+        case "BANK BCA":
+          return "BCAVA";
+        default:
+          return null;
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handlePayNow = async () => {
+    if (selectedBank) {
+      const id = await getid();
+      const bank = await ValueBank();
+      const token = await getToken();
+      Number(id);
+      const response = await axios
+        .post(
+          `http://127.0.0.1:8000/v1/siswa/payment/${id}`,
+          {
+            method: bank,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+        .then((response) => {
+          console.log(response.data.data.data.pay_code);
+          AsyncStorage.setItem("va", response.data.data.data.pay_code);
+          AsyncStorage.setItem("reference", response.data.data.data.reference);
+          // console.log(response.data);
+          navigation.navigate("virtualAccount");
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      // navigation.navigate("virtualAccount", {
+      //   bankName: selectedBank,
+      //   bankImage: selectedBankImage,
+      // });
+    }
+  };
+
+  useEffect(() => {
+    const harga = async () => {
+      try {
+        const response = await axios
+          .get("http://127.0.0.1:8000/v1/siswa/harga")
+          .then((response) => {
+            // console.log(response.data.data.amoung);
+            setHarga(response.data.data.amoung);
+          });
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    harga();
+  }, []);
+
+  const formatRupiah = (number: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+    }).format(number);
   };
 
   return (
@@ -97,7 +178,7 @@ const MetodePembayaran: React.FC = () => {
       </View>
       <View style={styles.totalContainer}>
         <Text style={styles.totalText}>Total: </Text>
-        <Text style={styles.totalAmount}>Rp. 1.250.000</Text>
+        <Text style={styles.totalAmount}>{formatRupiah(harga)}</Text>
       </View>
       <View style={styles.payNowContainer}>
         <TouchableOpacity

@@ -9,17 +9,26 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import axios from "axios";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import useSWR from "swr";
 
 const PaymentScreen: React.FC = () => {
   const navigation: any = useNavigation();
   const [bankName, setBankName] = useState<string | null>(null);
   const [bankImage, setBankImage] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<string>("Salin");
+  const [harga, setHarga] = useState<number>(0);
+  const [virtualAccountt, setVirtualAccount] = useState<string>("");
+  const [dataCallback, setDataCallback] = useState<any>([]);
+  const [reference, setReference] = useState<string>("");
 
   useEffect(() => {
     const loadBankInfo = async () => {
       const storedBankName = await AsyncStorage.getItem("selectedBank");
       const storedBankImage = await AsyncStorage.getItem("selectedBankImage");
+      const virtualAccount: any = await AsyncStorage.getItem("va");
+      setVirtualAccount(virtualAccount);
       if (storedBankName && storedBankImage) {
         setBankName(storedBankName);
         setBankImage(storedBankImage);
@@ -28,8 +37,8 @@ const PaymentScreen: React.FC = () => {
     loadBankInfo();
   }, []);
 
-  const handleCopy = () => {
-    const virtualAccount = "0967 0880 1923 0963";
+  const handleCopy = async () => {
+    const virtualAccount: any = await AsyncStorage.getItem("va");
     Clipboard.setString(virtualAccount);
     setCopyStatus("Disalin");
     setTimeout(() => {
@@ -37,6 +46,54 @@ const PaymentScreen: React.FC = () => {
     }, 3000);
   };
 
+  useEffect(() => {
+    const harga = async () => {
+      try {
+        const response = await axios
+          .get("http://127.0.0.1:8000/v1/siswa/harga")
+          .then((response) => {
+            // console.log(response.data.data.amoung);
+            setHarga(response.data.data.amoung);
+          });
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    harga();
+  }, []);
+
+  const formatRupiah = (number: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+    }).format(number);
+  };
+
+  const fethData = async (url: string) => {
+    const response = await axios.get(url);
+    return response.data.data;
+  };
+  useEffect(() => {
+    const getReference = async () => {
+      const storedReference: any = await AsyncStorage.getItem("reference");
+      setReference(storedReference);
+    };
+    getReference();
+  }, []);
+
+  const { data, error } = useSWR(
+    reference ? `http://127.0.0.1:8000/v1/transaction/${reference}` : null,
+    fethData
+  );
+
+  useEffect(() => {
+    if (data) {
+      if (data.status === "PAID" && data.reference === reference) {
+        // console.log("PAID");
+        navigation.navigate("(tabs)", { screen: "informasi" });
+      }
+    }
+  }, [data]);
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Muhammad Alfahmi Irfan</Text>
@@ -63,7 +120,9 @@ const PaymentScreen: React.FC = () => {
       <View style={styles.virtualAccountContainer}>
         <View>
           <Text style={styles.virtualAccountLabel}>No. Virtual Account</Text>
-          <Text style={styles.virtualAccountNumber}>0967 0880 1923 0963</Text>
+          {virtualAccountt && (
+            <Text style={styles.virtualAccountNumber}>{virtualAccountt}</Text>
+          )}
         </View>
         <TouchableOpacity onPress={handleCopy}>
           <Text style={styles.copyButton}>{copyStatus}</Text>
@@ -71,7 +130,7 @@ const PaymentScreen: React.FC = () => {
       </View>
       <View style={styles.totalContainer}>
         <Text style={styles.totalLabel}>Total: </Text>
-        <Text style={styles.totalAmount}>Rp. 1.250.000</Text>
+        <Text style={styles.totalAmount}>{formatRupiah(harga)}</Text>
       </View>
     </View>
   );
@@ -84,7 +143,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 16,
   },
   backButtonContainer: {
