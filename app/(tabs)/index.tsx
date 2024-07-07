@@ -1,74 +1,140 @@
-import { Image, StyleSheet, Platform } from "react-native";
+import { TabBarIcon } from "@/components/navigation/TabBarIcon";
+import { useNavigation } from "@react-navigation/native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { isAuthenticated, removeToken } from "@/utils/storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { HelloWave } from "@/components/HelloWave";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+export default function DashboardScreen() {
+  const navigation: any = useNavigation();
+  const colorScheme = useColorScheme();
+  const [username, setUsername] = useState<string|null>('');
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/partial-react-logo.png")}
-          style={styles.reactLogo}
-        />
+  useEffect(() => {
+    const checkAuth = async () => {
+      const auth = await isAuthenticated();
+      if (!auth) {
+        navigation.navigate("login");
       }
-    >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit{" "}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>{" "}
-          to see changes. Press{" "}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: "cmd + d", android: "cmd + m" })}
-          </ThemedText>{" "}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this
-          starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{" "}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText>{" "}
-          to get a fresh <ThemedText type="defaultSemiBold">app</ThemedText>{" "}
-          directory. This will move the current{" "}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{" "}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      const name = await AsyncStorage.getItem('username');
+      setUsername(name)
+    };
+    checkAuth();
+  }, []);
+
+  const handleLogout = async () => {
+    const logout: any = await removeToken();
+    navigation.navigate("login");
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.welcomeText}>Selamat Datang,</Text>
+        <Text style={styles.userName}>{username}</Text>
+      </View>
+      <View style={styles.dashboardHeader}>
+        <Text style={styles.dashboardTitle}>Dashboard</Text>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={() => handleLogout()}
+        >
+          <TabBarIcon
+            name={"log-out-outline"}
+            color={colorScheme === "dark" ? "#000000" : "#000000"}
+            size={20}
+          />
+        </TouchableOpacity>
+      </View>
+      <View style={styles.dashboard}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate("pembayaran")}
+        >
+          <View style={styles.buttonContent}>
+            <TabBarIcon
+              name={"cash"}
+              color={colorScheme === "dark" ? "#ffffff" : "#ffffff"}
+            />
+            <Text style={styles.buttonText}>Pembayaran Living Cost</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate("informasi")}
+        >
+          <View style={styles.buttonContent}>
+            <TabBarIcon
+              name={"book"}
+              color={colorScheme === "dark" ? "#ffffff" : "#ffffff"}
+            />
+            <Text style={styles.buttonText}>
+              Informasi Pembayaran Living Cost
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    padding: 16,
+  },
+  header: {
+    marginBottom: 10,
+  },
+  welcomeText: {
+    fontSize: 16,
+    color: "#333333",
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333333",
+  },
+  dashboardHeader: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 8,
+    marginBottom: 10,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  dashboardTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: "absolute",
+  dashboard: {
+    flex: 1,
+    justifyContent: "flex-start",
+    marginTop: 20,
+  },
+  button: {
+    backgroundColor: "#085288",
+    padding: 20,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  buttonContent: {
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonText: {
+    marginTop: 10,
+    color: "#FFFFFF",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  logoutButton: {
+    backgroundColor: "#FFFF00",
+    padding: 10,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    textAlign: "center",
   },
 });

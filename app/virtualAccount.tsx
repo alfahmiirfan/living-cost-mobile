@@ -50,7 +50,7 @@ const PaymentScreen: React.FC = () => {
     const harga = async () => {
       try {
         const response = await axios
-          .get("http://127.0.0.1:8000/v1/siswa/harga")
+          .get("http://127.0.0.1:8000/api/v1/siswa/harga")
           .then((response) => {
             // console.log(response.data.data.amoung);
             setHarga(response.data.data.amoung);
@@ -82,7 +82,7 @@ const PaymentScreen: React.FC = () => {
   }, []);
 
   const { data, error } = useSWR(
-    reference ? `http://127.0.0.1:8000/v1/transaction/${reference}` : null,
+    reference ? `http://127.0.0.1:8000/api/v1/transaction/${reference}` : null,
     fethData
   );
 
@@ -96,7 +96,7 @@ const PaymentScreen: React.FC = () => {
   }, [data]);
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Muhammad Alfahmi Irfan</Text>
+      {/* <Text style={styles.title}>Muhammad Alfahmi Irfan</Text> */}
       <View style={styles.backButtonContainer}>
         <TouchableOpacity
           style={styles.backButton}

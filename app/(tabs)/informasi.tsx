@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  Button,
   TouchableOpacity,
   StyleSheet,
   FlatList,
@@ -12,6 +11,7 @@ import { Picker } from "@react-native-picker/picker";
 import { getToken, isAuthenticated } from "@/utils/storage";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface DropdownItem {
   label: string;
@@ -39,18 +39,22 @@ const months: DropdownItem[] = [
   { label: "Desember", value: "Desember" },
 ];
 
-const dummyData = [
-  {
-    no: 1,
-    tahun: "2023",
-    bulan: "November",
-  },
-];
+type IncomeData = {
+  id: number;
+  year: number;
+  month: string;
+  status: string;
+};
 
 const Informasi: React.FC = () => {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [data, setData] = useState<IncomeData[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigation: any = useNavigation();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedYear, setSelectedYear] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const itemsPerPage = 6;
+  const [username, setUsername] = useState<string|null>('');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -58,6 +62,8 @@ const Informasi: React.FC = () => {
       if (!auth) {
         navigation.navigate("login");
       }
+      const name = await AsyncStorage.getItem('username');
+      setUsername(name)
     };
     checkAuth();
   }, []);
@@ -67,13 +73,14 @@ const Informasi: React.FC = () => {
       try {
         const token = await getToken();
         const response = await axios
-          .get("http://127.0.0.1:8000/v1/income/list/siswa", {
+          .get("http://127.0.0.1:8000/api/v1/income/list/siswa", {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           })
           .then((response) => {
-            // console.log(response.data.data);
+            // const filterData = response.data.data.filter((item: any) => item.status == 'Belum Bayar');
+            // setData(filterData);
             setData(response.data.data);
             setLoading(false);
           });
@@ -99,14 +106,46 @@ const Informasi: React.FC = () => {
     }
   };
 
-  const [selectedYear, setSelectedYear] = useState<string | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+
+  const currentPageData = data.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const renderPagination = () => (
+    <View style={styles.pagination}>
+      <TouchableOpacity
+        disabled={currentPage === 1}
+        onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+      >
+        <Text style={styles.pageButton}>{"<"}</Text>
+      </TouchableOpacity>
+      <Text style={styles.pageNumber}>
+        {currentPage} / {totalPages}
+      </Text>
+      <TouchableOpacity
+        disabled={currentPage === totalPages}
+        onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+      >
+        <Text style={styles.pageButton}>{">"}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
+
+  if (!data || data.length === 0) {
+    return <Text>No Data Available</Text>;
+  }
 
   return (
     <View style={styles.wrap}>
       <SafeAreaView style={styles.container}>
         <Text style={styles.title}>Dashboard User</Text>
-        <Text style={styles.subtitle}>Muhammad Alfahmi Irfan</Text>
+        <Text style={styles.subtitle}>{username}</Text>
         <View style={styles.section}>
           <Text style={styles.heading}>Informasi Pembayaran Living Cost</Text>
         </View>
@@ -150,11 +189,11 @@ const Informasi: React.FC = () => {
             <Text style={styles.tableHeaderText}>Status</Text>
           </View>
           <FlatList
-            data={data}
+            data={currentPageData}
             keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
+            renderItem={({ item, index }) => (
               <View style={styles.tableRow}>
-                <Text style={styles.tableCell}>{item.id}</Text>
+                <Text style={styles.tableCell}>{(index + 1) + (currentPage - 1) * itemsPerPage}</Text>
                 <Text style={styles.tableCell}>{item.year}</Text>
                 <Text style={styles.tableCell}>{item.month}</Text>
                 <Text style={styles.tableCell}>
@@ -171,6 +210,7 @@ const Informasi: React.FC = () => {
           />
         </View>
       </SafeAreaView>
+      {renderPagination()}
     </View>
   );
 };
@@ -257,6 +297,20 @@ const styles = StyleSheet.create({
   },
   statusDefault: {
     backgroundColor: "gray",
+  },
+  pagination: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  pageButton: {
+    marginHorizontal: 10,
+    fontSize: 18,
+    color: "blue",
+  },
+  pageNumber: {
+    fontSize: 18,
   },
 });
 

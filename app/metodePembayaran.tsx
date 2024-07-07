@@ -86,7 +86,7 @@ const MetodePembayaran: React.FC = () => {
       Number(id);
       const response = await axios
         .post(
-          `http://127.0.0.1:8000/v1/siswa/payment/${id}`,
+          `http://127.0.0.1:8000/api/v1/siswa/payment/${id}`,
           {
             method: bank,
           },
@@ -117,7 +117,7 @@ const MetodePembayaran: React.FC = () => {
     const harga = async () => {
       try {
         const response = await axios
-          .get("http://127.0.0.1:8000/v1/siswa/harga")
+          .get("http://127.0.0.1:8000/api/v1/siswa/harga")
           .then((response) => {
             // console.log(response.data.data.amoung);
             setHarga(response.data.data.amoung);
@@ -138,7 +138,7 @@ const MetodePembayaran: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Muhammad Alfahmi Irfan</Text>
+      {/* <Text style={styles.title}>Muhammad Alfahmi Irfan</Text> */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.backButton}

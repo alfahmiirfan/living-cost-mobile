@@ -2,15 +2,18 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
+  Button,
   TouchableOpacity,
   StyleSheet,
   FlatList,
   SafeAreaView,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { getToken, isAuthenticated } from "@/utils/storage";
 import { useNavigation } from "@react-navigation/native";
+import { getToken, isAuthenticated } from "@/utils/storage";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+// import TabLayout from "./layout";
 
 interface DropdownItem {
   label: string;
@@ -38,21 +41,23 @@ const months: DropdownItem[] = [
   { label: "Desember", value: "Desember" },
 ];
 
-type IncomeData = {
-  id: number;
-  year: number;
-  month: string;
-  status: string;
-};
+const dummyData = [
+  {
+    no: 1,
+    tahun: "2023",
+    bulan: "November",
+  },
+];
 
-const Informasi: React.FC = () => {
-  const [data, setData] = useState<IncomeData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const navigation: any = useNavigation();
-  const [currentPage, setCurrentPage] = useState(1);
+const Pembayaran: React.FC = () => {
+  const navigation:any = useNavigation()
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
-  const itemsPerPage = 5;
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+  const [username, setUsername] = useState<string|null>('');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -60,6 +65,8 @@ const Informasi: React.FC = () => {
       if (!auth) {
         navigation.navigate("login");
       }
+      const name = await AsyncStorage.getItem('username');
+      setUsername(name)
     };
     checkAuth();
   }, []);
@@ -68,36 +75,31 @@ const Informasi: React.FC = () => {
     const dataIncome = async () => {
       try {
         const token = await getToken();
-        const response = await axios.get(
-          "http://127.0.0.1:8000/v1/income/list/siswa",
-          {
+        const response = await axios
+          .get("http://127.0.0.1:8000/api/v1/income/list/siswa", {
             headers: {
-              Authorization: Bearer ${token},
+              Authorization: `Bearer ${token}`,
             },
-          }
-        );
-        setData(response.data.data);
+          })
+          .then((response) => {
+            const filterData = response.data.data.filter((item: any) => item.status == 'Belum Bayar');
+            // console.log(response.data.data);
+            setData(filterData);
+            setLoading(false);
+          });
+        console.log(data);
       } catch (err) {
         console.log(err);
-      } finally {
         setLoading(false);
       }
     };
     dataIncome();
   }, []);
 
-  const getStatusStyle = (status: any) => {
-    switch (status) {
-      case "Telat Bayar":
-        return styles.statusRed;
-      case "Belum Bayar":
-        return styles.statusYellow;
-      case "Sudah Bayar":
-        return styles.statusGreen;
-      default:
-        return styles.statusDefault;
-    }
-  };
+  const toMetodePembayaran = async (id:string) => {
+    await AsyncStorage.setItem("id_income", id);
+    navigation.navigate("metodePembayaran");
+  }
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
 
@@ -125,20 +127,12 @@ const Informasi: React.FC = () => {
       </TouchableOpacity>
     </View>
   );
-
-  if (loading) {
-    return <Text>Loading...</Text>;
-  }
-
-  if (!data || data.length === 0) {
-    return <Text>No Data Available</Text>;
-  }
-
   return (
+      // <TabLayout>  
     <View style={styles.wrap}>
       <SafeAreaView style={styles.container}>
         <Text style={styles.title}>Dashboard User</Text>
-        <Text style={styles.subtitle}>Muhammad Alfahmi Irfan</Text>
+        <Text style={styles.subtitle}>{username}</Text>
         <View style={styles.section}>
           <Text style={styles.heading}>Informasi Pembayaran Living Cost</Text>
         </View>
@@ -179,24 +173,20 @@ const Informasi: React.FC = () => {
             <Text style={styles.tableHeaderText}>No</Text>
             <Text style={styles.tableHeaderText}>Tahun</Text>
             <Text style={styles.tableHeaderText}>Bulan</Text>
-            <Text style={styles.tableHeaderText}>Status</Text>
+            <Text style={styles.tableHeaderText}>Aksi</Text>
           </View>
           <FlatList
             data={currentPageData}
             keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
+            renderItem={({ item, index }) => (
               <View style={styles.tableRow}>
-                <Text style={styles.tableCell}>{item.id}</Text>
+                <Text style={styles.tableCell}>{index + 1}</Text>
                 <Text style={styles.tableCell}>{item.year}</Text>
                 <Text style={styles.tableCell}>{item.month}</Text>
                 <Text style={styles.tableCell}>
-                  <View
-                    style={[styles.statusBadge, getStatusStyle(item.status)]}
-                  >
-                    <Text style={styles.statusText}>
-                      {item.status == "Sudah Bayar" ? "Lunas" : item.status}
-                    </Text>
-                  </View>
+                  <TouchableOpacity style={styles.payButton} onPress={() => toMetodePembayaran(item.id)}>
+                    <Text style={styles.payButtonText}>Bayar</Text>
+                  </TouchableOpacity>
                 </Text>
               </View>
             )}
@@ -279,17 +269,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
   },
-  statusRed: {
-    backgroundColor: "red",
+  payButton: {
+    backgroundColor: "#085288",
+    padding: 10,
+    borderRadius: 8,
   },
-  statusYellow: {
-    backgroundColor: "yellow",
-  },
-  statusGreen: {
-    backgroundColor: "green",
-  },
-  statusDefault: {
-    backgroundColor: "gray",
+  payButtonText: {
+    color: "#fff",
+    textAlign: "center",
   },
   pagination: {
     flexDirection: "row",
@@ -307,4 +294,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Informasi;
+export default Pembayaran;

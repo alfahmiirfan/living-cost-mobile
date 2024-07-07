@@ -10,6 +10,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { saveToken, getToken } from "@/utils/storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const LoginAdmin: React.FC = () => {
   const navigation: any = useNavigation();
@@ -23,7 +24,7 @@ const LoginAdmin: React.FC = () => {
     // Handle the login logic here
     try {
       const response = await axios
-        .post("http://127.0.0.1:8000/v1/siswa/login", {
+        .post("http://127.0.0.1:8000/api/v1/siswa/login", {
           nisn: nisn,
           password: password,
         })
@@ -31,6 +32,7 @@ const LoginAdmin: React.FC = () => {
           // console.log(response.data);
           saveToken(response.data.data.access_token);
           setData(response.data);
+          AsyncStorage.setItem("username", response.data.data.name);
           setLoading(false);
           navigation.navigate("(tabs)", { screen: "pembayaran" });
         });
