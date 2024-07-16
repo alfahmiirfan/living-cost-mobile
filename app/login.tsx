@@ -47,7 +47,7 @@ const LoginAdmin: React.FC = () => {
       <View style={styles.logoContainer}>
         <Image
           source={{
-            uri: "https://www.sman10pentagonkaur.sch.id/wp-content/uploads/2020/03/logo.png",
+            uri: "assets/images/logo-sma.png",
           }}
           style={styles.logo}
         />
