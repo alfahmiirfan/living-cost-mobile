@@ -11,6 +11,7 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { saveToken, getToken } from "@/utils/storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+// import LOGO from "../assets/images/logo-sma.png";
 
 const LoginAdmin: React.FC = () => {
   const navigation: any = useNavigation();
@@ -24,7 +25,7 @@ const LoginAdmin: React.FC = () => {
     // Handle the login logic here
     try {
       const response = await axios
-        .post("http://127.0.0.1:8000/api/v1/siswa/login", {
+        .post("https://sman10pentagon-livingcost.my.id/api/v1/siswa/login", {
           nisn: nisn,
           password: password,
         })
@@ -46,9 +47,10 @@ const LoginAdmin: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.logoContainer}>
         <Image
-          source={{
-            uri: "assets/images/logo-sma.png",
-          }}
+          // source={{
+          //   uri: "../assets/images/logo-sma.png",
+          // }}
+          source={require('../assets/images/logo-sma.png')}
           style={styles.logo}
         />
       </View>

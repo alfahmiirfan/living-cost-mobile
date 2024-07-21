@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    padding: 16,
+    padding: 28,
   },
   header: {
     marginBottom: 10,
@@ -93,8 +93,7 @@ const styles = StyleSheet.create({
     color: "#333333",
   },
   userName: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 16,
     color: "#333333",
   },
   dashboardHeader: {
@@ -117,11 +116,14 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     marginBottom: 20,
+    // width: 360,
+    height: 150,
   },
   buttonContent: {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
+    top: 24,
   },
   buttonText: {
     marginTop: 10,

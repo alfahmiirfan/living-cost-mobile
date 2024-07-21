@@ -37,6 +37,8 @@ const PaymentScreen: React.FC = () => {
     loadBankInfo();
   }, []);
 
+  console.log('hahaha')
+
   const handleCopy = async () => {
     const virtualAccount: any = await AsyncStorage.getItem("va");
     Clipboard.setString(virtualAccount);
@@ -50,7 +52,7 @@ const PaymentScreen: React.FC = () => {
     const harga = async () => {
       try {
         const response = await axios
-          .get("http://127.0.0.1:8000/api/v1/siswa/harga")
+          .get("https://sman10pentagon-livingcost.my.id/api/v1/siswa/harga")
           .then((response) => {
             // console.log(response.data.data.amoung);
             setHarga(response.data.data.amoung);
@@ -82,7 +84,7 @@ const PaymentScreen: React.FC = () => {
   }, []);
 
   const { data, error } = useSWR(
-    reference ? `http://127.0.0.1:8000/api/v1/transaction/${reference}` : null,
+    reference ? `https://sman10pentagon-livingcost.my.id/api/v1/transaction/${reference}` : null,
     fethData
   );
 
@@ -112,8 +114,14 @@ const PaymentScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
       <View style={styles.bankInfoContainer}>
-        {bankImage && (
-          <Image source={{ uri: bankImage }} style={styles.bankImage} />
+        {bankImage == "bri" && (
+          <Image source={require("../assets/images/bank-bri.png")} style={styles.bankImage} />
+        )}
+        {bankImage == "bni" && (
+          <Image source={require("../assets/images/bank-bni.png")} style={styles.bankImage} />
+        )}
+        {bankImage == "bca" && (
+          <Image source={require("../assets/images/bank-bca.png")} style={styles.bankImage} />
         )}
         {bankName && <Text style={styles.bankName}>{bankName}</Text>}
       </View>

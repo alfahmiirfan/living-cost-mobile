@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  ImageSourcePropType,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import TabBar from "@/components/TabBar";
@@ -8,7 +15,8 @@ import { getToken } from "@/utils/storage";
 
 interface BankOptionProps {
   bankName: string;
-  bankImage: string;
+  bankImage: ImageSourcePropType;
+  imageName: string;
   onSelect: (bankName: string, bankImage: string) => void;
   isSelected: boolean;
 }
@@ -16,15 +24,16 @@ interface BankOptionProps {
 const BankOption: React.FC<BankOptionProps> = ({
   bankName,
   bankImage,
+  imageName,
   onSelect,
   isSelected,
 }) => (
   <TouchableOpacity
     style={[styles.bankOptionContainer, isSelected && styles.selectedBank]}
-    onPress={() => onSelect(bankName, bankImage)}
+    onPress={() => onSelect(bankName, imageName)}
   >
     <View style={styles.bankOptionContent}>
-      <Image source={{ uri: bankImage }} style={styles.bankImage} />
+      <Image source={bankImage} style={styles.bankImage} />
       <Text style={styles.bankText}>{bankName}</Text>
     </View>
   </TouchableOpacity>
@@ -86,7 +95,7 @@ const MetodePembayaran: React.FC = () => {
       Number(id);
       const response = await axios
         .post(
-          `http://127.0.0.1:8000/api/v1/siswa/payment/${id}`,
+          `https://sman10pentagon-livingcost.my.id/api/v1/siswa/payment/${id}`,
           {
             method: bank,
           },
@@ -117,7 +126,7 @@ const MetodePembayaran: React.FC = () => {
     const harga = async () => {
       try {
         const response = await axios
-          .get("http://127.0.0.1:8000/api/v1/siswa/harga")
+          .get("https://sman10pentagon-livingcost.my.id/api/v1/siswa/harga")
           .then((response) => {
             // console.log(response.data.data.amoung);
             setHarga(response.data.data.amoung);
@@ -159,19 +168,22 @@ const MetodePembayaran: React.FC = () => {
       <View style={styles.bankOptionsContainer}>
         <BankOption
           bankName="BANK BRI"
-          bankImage="assets/images/bri.svg"
+          bankImage={require("../assets/images/bank-bri.png")}
+          imageName="bri"
           onSelect={handleSelectBank}
           isSelected={selectedBank === "BANK BRI"}
         />
         <BankOption
           bankName="BANK BNI"
-          bankImage="assets/images/bni.svg"
+          bankImage={require("../assets/images/bank-bni.png")}
+          imageName="bni"
           onSelect={handleSelectBank}
           isSelected={selectedBank === "BANK BNI"}
         />
         <BankOption
           bankName="BANK BCA"
-          bankImage="assets/images/bca.svg"
+          bankImage={require("../assets/images/bank-bca.png")}
+          imageName="bca"
           onSelect={handleSelectBank}
           isSelected={selectedBank === "BANK BCA"}
         />
