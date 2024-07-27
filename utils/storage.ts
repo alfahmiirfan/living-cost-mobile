@@ -30,7 +30,11 @@ export const removeToken = async ():Promise<void> => {
 export const isAuthenticated = async (): Promise<boolean> => {
     try {
       const token = await AsyncStorage.getItem(TOKEN_KEY);
-      return token !== null || token !== undefined;
+      if(token){
+        return true
+      }else {
+        return false
+      }
     } catch (error) {
       console.error('Authentication check failed:', error);
       return false; 

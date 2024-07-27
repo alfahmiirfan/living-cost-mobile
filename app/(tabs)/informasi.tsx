@@ -86,10 +86,11 @@ const Informasi: React.FC = () => {
             },
           }
         );
-        const filterData = response.data.data.filter(
-          (item: any) => item.status == "Belum Bayar"
-        );
-        setData(filterData);
+        // const filterData = response.data.data.filter(
+        //   (item: any) => item.status == "Belum Bayar"
+        // );
+        setData(response.data.data)
+        // setData(filterData);
         setLoading(false);
       } catch (err) {
         console.log(err);

@@ -1,9 +1,9 @@
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, AppState, AppStateStatus } from "react-native";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { isAuthenticated, removeToken } from "@/utils/storage";
+import { isAuthenticated, removeToken, getToken } from "@/utils/storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function DashboardScreen() {
@@ -16,15 +16,19 @@ export default function DashboardScreen() {
       const auth = await isAuthenticated();
       if (!auth) {
         navigation.navigate("login");
+      } else {
+        const name = await AsyncStorage.getItem('username');
+        setUsername(name);
       }
-      const name = await AsyncStorage.getItem('username');
-      setUsername(name)
     };
     checkAuth();
-  }, []);
+  }, [navigation]);
 
   const handleLogout = async () => {
     const logout: any = await removeToken();
+    if(logout){
+      await AsyncStorage.clear()
+    }
     navigation.navigate("login");
   };
 
